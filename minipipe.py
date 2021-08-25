@@ -163,6 +163,24 @@ def cf_update(stack_name, cloudformation_template):
     return
 
 
+def cleanup_cloudformation(stack_name):
+    response = CLIENT.list_stacks(
+        StackStatusFilter=[
+            'CREATE_COMPLETE',
+            'ROLLBACK_FAILED',
+            'ROLLBACK_COMPLETE',
+            'UPDATE_COMPLETE'
+        ]
+    )
+    
+    for stack in response['StackSummaries']:
+        temp_name = stack['StackId'].split('/')[1]
+            if temp_name not in local_templates:
+                print(f"Deleting: {temp_name}")
+                cf_delete(temp_name)
+    return
+
+
 def deploy_cloudformation(stack_name, cloudformation_template):
     response = cf_check_status(stack_name) 
     if response:
