@@ -30,23 +30,26 @@ def main():
     # sha = os.environ['CODEBULD_SOURCE_VERSION']
 
     file_parsing_complete = parse_file_changes(user, repo, sha)
+    print(f"Updates: {UPDATES}")
+    print(f"Deletes: {DELETES}"")
 
-    if file_parsing_complete:
-        for each in UPDATES:
-            for region in REGIONS:
-                create_client(account, region)
-                run_updates(each, region)
+
+    # if file_parsing_complete:
+    #     for each in UPDATES:
+    #         for region in REGIONS:
+    #             create_client(account, region)
+    #             run_updates(each)
         
-        for each in DELETES:
-            for region in REGIONS:
-                create_client(account, region)
-                delete_cloudformation(stack_name)
-    else:
-        print('No files to parse. Ending.')
+    #     for each in DELETES:
+    #         for region in REGIONS:
+    #             create_client(account, region)
+    #             delete_cloudformation(each)
+    # else:
+    #     print('No files to parse. Ending.')
     return
 
 
-def run_updates(template_file, region):
+def run_updates(template_file):
     if os.name == 'nt':
         file_name = f"{dir_path}\{'\\'.join(template_file.split('/')[1:])}"
     elif os.name == 'posix':
