@@ -1,18 +1,3 @@
-#   Copyright 2021 Michael Miller
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-
-
 import boto3
 import datetime
 import json
@@ -30,7 +15,7 @@ DELETES = []
 UPDATES = []
 
 ACCOUNTS = []
-REGIONS = ['us-east-1', 'us-east-2']
+REGIONS = ['us-east-2']
 
 
 def main():
@@ -48,33 +33,36 @@ def main():
 
     if file_parsing_complete:
         for each in UPDATES:
-            if os.name == 'nt':
-                file_name = f"{dir_path}\{'\\'.join(each.split('/')[1:])}"
-            elif os.name == 'posix':
-                file_name = f"{dir_path}/{'/'.join(each.split('/')[1:])}"
-            head, tail = os.path.split(filename)
-            stack_name = f"{each}-{tail.split('.')[0]}"
-            cloudformation_template = None
-            regions = []
-            with open(each, 'r') as yaml_file:
-                cloudformation_template = yaml_file.read()
-                yaml_file.seek(0)
-                for line in yaml_file:
-                    if line.startswith('#regions:'):
-                        regions = line.split(',').strip()
-            if cloudformation_template:
-                for region in region:
-                    create_client(account, region)
-                    print(stack_name)
-                    deploy_cloudformation(stack_name, cloudformation_template)
+            for region in REGIONS:
+                create_client(account, region)
+                run_updates(each, region)
         
         for each in DELETES:
             for region in REGIONS:
-                print(stack_name)
                 create_client(account, region)
                 delete_cloudformation(stack_name)
     else:
         print('No files to parse. Ending.')
+    return
+
+
+def run_updates(template_file, region):
+    if os.name == 'nt':
+        file_name = f"{dir_path}\{'\\'.join(template_file.split('/')[1:])}"
+    elif os.name == 'posix':
+        file_name = f"{dir_path}/{'/'.join(template_file.split('/')[1:])}"
+    head, tail = os.path.split(filename)
+    stack_name = f"{template_file}-{tail.split('.')[0]}"
+    cloudformation_template = None
+    with open(template_file, 'r') as yaml_file:
+        cloudformation_template = yaml_file.read()
+        # yaml_file.seek(0)
+        # for line in yaml_file:
+        #     if line.startswith('#regions:'):
+        #         regions = line.split(',').strip()
+    if cloudformation_template:
+        print(stack_name)
+        deploy_cloudformation(stack_name, cloudformation_template)
     return
 
 
@@ -160,24 +148,6 @@ def cf_update(stack_name, cloudformation_template):
         response = cf_check_status(stack_name)
         if response['Stacks'][0]['StackStatus'] in ['ROLLBACK_FAILED']:
             cf_delete(stack_name)
-    return
-
-
-def cleanup_cloudformation(stack_name):
-    response = CLIENT.list_stacks(
-        StackStatusFilter=[
-            'CREATE_COMPLETE',
-            'ROLLBACK_FAILED',
-            'ROLLBACK_COMPLETE',
-            'UPDATE_COMPLETE'
-        ]
-    )
-    
-    for stack in response['StackSummaries']:
-        temp_name = stack['StackId'].split('/')[1]
-            if temp_name not in local_templates:
-                print(f"Deleting: {temp_name}")
-                cf_delete(temp_name)
     return
 
 
