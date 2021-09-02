@@ -61,14 +61,12 @@ def run_updates(template_file):
     cloudformation_template = None
     with open(template_file, 'r') as yaml_file:
         cloudformation_template = yaml_file.read()
-        # yaml_file.seek(0)
         # for line in yaml_file:
         #     if line.startswith('#regions:'):
         #         regions = line.split(',').strip()
     if cloudformation_template:
-        # print(stack_name)
         STACKS.append(stack_name)
-        # deploy_cloudformation(stack_name, cloudformation_template)
+        deploy_cloudformation(stack_name, cloudformation_template)
     return
 
 
@@ -90,6 +88,7 @@ def local_stacks_to_delete():
             if stack['StackName'] not in STACKS:
                 DELETES.append(stack['StackName'])
     return False
+
 
 def local_parse_file_changes():
     global UPDATES
@@ -205,15 +204,11 @@ def cf_update(stack_name, cloudformation_template):
 
 
 def deploy_cloudformation(stack_name, cloudformation_template):
-    response = cf_check_status(stack_name) 
+    response = cf_check_status(stack_name)
     if response:
         cf_update(stack_name, cloudformation_template, response['Stacks'][0]['StackId'])
     else:
-        cf_create(stack_name, cf_template)
-    return
-
-
-def delete_cloudformation():
+        cf_create(stack_name, cloudformation_template)
     return
 
 
